@@ -7,7 +7,7 @@ local function layout_circle(collection, rad)
     local step = 2*math.pi / collection.count
     local angle = 0
 
-    for _,ag in pairs(collection.agents) do
+    for _,ag in ordered(collection) do
         ag:lt(angle)
         ag:fd(rad)
         angle = angle + step
@@ -16,8 +16,6 @@ local function layout_circle(collection, rad)
 end
 
 SETUP = function()
-
-    Config.go = true
 
     Nodes = FamilyMobil()
     Nodes:create_n( Config.nodes, function()
@@ -32,7 +30,6 @@ SETUP = function()
     layout_circle(Nodes, radius)
 
     -- A new collection to store the links
-    Links = nil
     Links = FamilyRelational()
 
 end
@@ -46,16 +43,11 @@ RUN = function()
     Links:add({
         ['source'] = node_1,
         ['target'] = node_2,
-        --['label'] = node_1.id .. '->' .. node_2.id,
-        ['color'] = {0.75, 0, 0, .2},
-        ['visible'] = true
-    })
+        ['color'] = {0.75, 0, 0, .2}
+        })
 
     while Links.count > Config.links do
         Links:kill_and_purge(one_of(Links))
     end
 
 end
-
--- GraphicEngine.set_setup_function(SETUP)
--- GraphicEngine.set_step_function(RUN)

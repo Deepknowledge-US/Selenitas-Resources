@@ -12,7 +12,7 @@ local function layout_circle(collection, radius)
     local step  = __2pi / collection.count
     local angle = 0
 
-    for _,ag in pairs(collection.agents) do
+    for _,ag in ordered(collection) do
         ag:lt(angle)
         ag:fd(radius)
         angle = angle + step
@@ -44,7 +44,7 @@ SETUP = function()
             , ['speed']   = math.random()
         }
     end)
-    for _, pers in pairs(People.agents) do
+    for _, pers in ordered(People) do
         local house = one_of(Houses)
         pers:face(house)
         pers.next_house = house
@@ -52,7 +52,7 @@ SETUP = function()
 end
 
 RUN = function()
-    for _, pers in pairs(People.agents) do
+    for _, pers in ordered(People) do
         if pers:dist_euc_to(pers.next_house) <= pers.speed then
             pers.current_house = pers.next_house
             pers.next_house = one_of(Houses:others(pers.current_house))
@@ -61,7 +61,3 @@ RUN = function()
         pers:fd(pers.speed)
     end
 end
-
--- Setup and start visualization
--- GraphicEngine.set_setup_function(SETUP)
--- GraphicEngine.set_step_function(RUN)

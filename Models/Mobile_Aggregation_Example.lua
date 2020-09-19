@@ -1,7 +1,10 @@
+-- Global variables
+
+world_size = 50
+
 -- Interface
 
-Config:create_slider('Num_mobiles', 0, 500, 1, 10)
-
+Config:create_slider('Num_mobiles', 0, 500, 1, 100)
 
 -- pos_to_torus relocate the agents as they are living in a torus
 local function pos_to_torus(agent, size_x, size_y)
@@ -27,33 +30,33 @@ end
 local function merge(ag,lead)
     ag.leader = lead
     ag.heading = lead.heading
-    ag.color = {0,0,1,1}
+    ag.color = {0,1,0,1}
 
     local e0 = ag:link_neighbors(Links)
-    print("e0 COUNT", e0.count)
+--    print("e0 COUNT", e0.count)
     local extend = e0:with(
         function(other)
             return other.leader ~= lead
         end)
 
     if extend.count > 0 then
-        for _,ag2 in pairs(extend.agents) do
+        for _,ag2 in ordered(extend) do
             merge(ag2,lead)
         end
     end
 end
 
 SETUP = function()
-    -- Test collection
+    -- Frame collection
     Checkpoints = FamilyMobil()
-    Checkpoints:add({ ['pos'] = {0, 100} })
+    Checkpoints:add({ ['pos'] = {0, world_size} })
     Checkpoints:add({ ['pos'] = {0,0} })
-    Checkpoints:add({ ['pos'] = { 100,0} })
-    Checkpoints:add({ ['pos'] = { 100, 100} })
+    Checkpoints:add({ ['pos'] = { world_size,0} })
+    Checkpoints:add({ ['pos'] = { world_size, world_size} })
 
-    for _, ch in pairs(Checkpoints.agents) do
+    for _, ch in ordered(Checkpoints) do
         ch.shape = 'circle'
-        ch.scale = 5
+        ch.scale = 2
         ch.color = {1,0,0,1}
         ch.label = ch:xcor() .. ',' .. ch:ycor()
     end
@@ -65,27 +68,18 @@ SETUP = function()
     -- Populate the collection with Agents.
     Mobiles:create_n( Config.Num_mobiles, function()
         return {
-            ['pos']          = {math.random(0,100),math.random(0,100)}
+            ['pos']          = {math.random(0,world_size),math.random(0,world_size)}
             ,['heading']     = math.random(__2pi)
             ,['shape']       = "circle"
             ,['scale']       = 1
             ,['color']       = {0,0,1,1}
-            ,['speed']       = math.random()
-            ,['turn_amount'] = 0
+            ,['turn_amount'] = random_float(-0.2,0.2)
         }
     end)
 
-    for _ , ag in pairs(Mobiles.agents) do
+    for _ , ag in ordered(Mobiles) do
         ag.leader = ag
-        -- Links:add({
-        --     ['source']  = ag
-        --     ,['target'] = ag
-        --     ,['color']  = {1,0,0,1}
-        --     --,['visible'] = false
-        --     })
     end
-
-    Config.go = true
 
 end
 
@@ -96,17 +90,17 @@ RUN = function()
     local alone = Mobiles:with(function(ag)
         return ag.leader == ag
     end)
-    for _,ag in pairs(alone.agents) do
-        ag.turn_amount = math.random(-0.2,0.2)
+    for _,ag in ordered(alone) do
+        ag.turn_amount = random_float(-0.2,0.2)
     end
 
-    for _,ag in pairs(Mobiles.agents) do
+    for _,ag in ordered(Mobiles) do
         ag:rt(ag.leader.turn_amount)
-        ag:fd(0.5)
-        pos_to_torus(ag,100,100)
+        ag:fd(0.1)
+        pos_to_torus(ag,world_size,world_size)
     end
 
-    for _,ag in pairs(Mobiles.agents) do
+    for _,ag in ordered(Mobiles) do
         local candidates = Mobiles:with(function(other)
             return (ag:dist_euc_to(other) < 1) and (ag.leader ~= other.leader)
         end)
@@ -115,15 +109,11 @@ RUN = function()
                 Links:add({
                     ['source']  = ag
                     ,['target'] = ag2
-                    ,['color']  = {1,0,0,1}
-                    --,['visible'] = false
+                    ,['color']  = {0,0,1,0}
+                    ,['visible'] = false
                     })
                 merge(ag2,ag.leader)
             end
         end
     end
 end
-
--- Setup and start visualization
--- GraphicEngine.set_setup_function(SETUP)
--- GraphicEngine.set_step_function(RUN)

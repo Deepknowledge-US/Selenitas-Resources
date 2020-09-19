@@ -1,9 +1,9 @@
-require 'Engine.utilities.utl_main'
-
 --[[
     In this example we create n nodes and distribute them in the grid. Once this is done,
     each node will create a link with the others.
 ]]--
+
+-- Interface and Global Parameters
 
 Config:create_slider('nodes', 0, 100, 1, 20)
 Config:create_slider('radius', 0, 100, 1, 15)
@@ -41,7 +41,7 @@ SETUP = function()
     Links = FamilyRelational()
     -- Each agent will create a link with the other agents.
     for _, ag in ordered(Nodes) do
-        for _, other in pairs(Nodes:others(ag).agents) do
+        for _, other in ordered(Nodes:others(ag)) do
             Links:add({
                 ['source'] = ag,
                 ['target'] = other,
@@ -57,7 +57,3 @@ end
 RUN = function()
 
 end
-
--- Setup and start visualization
--- GraphicEngine.set_setup_function(SETUP)
--- GraphicEngine.set_step_function(RUN)

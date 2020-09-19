@@ -1,6 +1,6 @@
 -- Interface 
 
-Config:create_slider('Num_pursuers', 0, 100, 1, 10)
+Config:create_slider('Num_pursuers', 0, 100, 1, 100)
 
 -- pos_to_torus relocate the agents as they are living in a torus
 local function pos_to_torus(agent, size_x, size_y)
@@ -19,11 +19,6 @@ local function pos_to_torus(agent, size_x, size_y)
     end
 end
 
-local function random_float(a,b)
-    return a + (b-a) * math.random();
-end
-
-
 SETUP = function()
     -- Test collection
     Checkpoints = FamilyMobil()
@@ -32,7 +27,7 @@ SETUP = function()
     Checkpoints:add({ ['pos'] = { 100,0} })
     Checkpoints:add({ ['pos'] = { 100, 100} })
 
-    for _, ch in pairs(Checkpoints.agents) do
+    for _, ch in ordered(Checkpoints) do
         ch.shape = 'circle'
         ch.scale = 5
         ch.color = {1,0,0,1}
@@ -43,10 +38,10 @@ SETUP = function()
     Pursuers = FamilyMobil()
 
     -- Populate the collection with Agents.
-    Pursuers:create_n( Config.Num_pursuers, function()
+    Pursuers:create_n (Config.Num_pursuers, function()
         return {
             ['pos']     = {math.random(0,100),math.random(0,100)}
-            ,['heading'] = math.random(__2pi)
+            ,['heading'] = __2pi*math.random()
             ,['scale']   = 2
             ,['color']   = {0,0,1,1}
             ,['speed']   = math.random()
@@ -55,10 +50,10 @@ SETUP = function()
 
     Pursueds = FamilyMobil()
 
-    Pursueds:create_n( 1, function()
+    Pursueds:create_n (1, function()
         return {
             ['pos']     = {math.random(0,100),math.random(0,100)}
-            ,['heading'] = math.random(__2pi)
+            ,['heading'] = __2pi*math.random()
             ,['scale']   = 2
             ,['color']   = {0,1,0,1}
             ,['speed']   = 1
@@ -66,8 +61,6 @@ SETUP = function()
     end)
 
     pursued = one_of(Pursueds)
-
-    Config.go = true
 
 end
 
@@ -79,14 +72,16 @@ RUN = function()
     pursued:fd(1)
     pos_to_torus(pursued,100,100)
 
-    for _,p in pairs(Pursuers.agents) do
-        p:face(pursued)
+    for _,p in ordered(Pursuers) do
+        if p:dist_euc_to(pursued) < 25 then
+            p:face(pursued)
+            p.color={0,0,1,1}
+        else
+            p.color={0,0,0.5,1}
+        end
+        p:lt(random_float(-0.4,0.4))
         p:fd(p.speed)
         pos_to_torus(p,100,100)
     end
 
 end
-
--- Setup and start visualization
--- GraphicEngine.set_setup_function(SETUP)
--- GraphicEngine.set_step_function(RUN)
